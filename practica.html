@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grilă de observare a lecției — Editor & PDF profesional</title>
+  <style>
+    :root{
+      --bg:#0b0e14;--card:#101624;--ink:#e9edf5;--muted:#9aa4b2;--accent:#6ea8fe;--border:#1b2230;
+    }
+    html,body{height:100%}
+    body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto;color:var(--ink);background:var(--bg)}
+    .app{max-width:1040px;margin:20px auto 80px;padding:0 16px}
+    header.appbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(8px);background:color-mix(in hsl,var(--bg) 85%,transparent);border-bottom:1px solid var(--border)}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0}
+    .btn{border:1px solid var(--border);background:var(--card);color:var(--ink);padding:10px 12px;border-radius:10px;cursor:pointer}
+    .btn.primary{border-color:color-mix(in hsl,var(--accent) 40%,var(--border));background:#0f1726}
+    .btn.warn{background:#28120f}
+    .btn.success{background:#0e1b12;border-color:#1b3321}
+    .spacer{flex:1}
+    .hero{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--border);border-radius:14px;padding:14px;background:linear-gradient(135deg,rgba(110,168,254,.15),rgba(126,231,135,.08))}
+    .who{font-weight:800}
+    .badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;color:#b8c1cc}
+    .shelf{display:grid;gap:18px}
+    .sheet-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .sheet-body{padding:16px;display:grid;gap:16px}
+    .meta{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    label{color:var(--muted);font-size:12px}
+    input[type=text],input[type=date],input[type=time],textarea{background:#0f1420;color:var(--ink);border:1px solid var(--border);border-radius:10px;padding:9px 11px}
+    textarea{resize:vertical;min-height:70px}
+    .section{border:1px dashed var(--border);border-radius:12px;padding:12px;background:#0e1421}
+    .section h3{margin:0 0 8px;font-size:15px}
+    .qrow{display:grid;grid-template-columns:330px 1fr;gap:12px;align-items:start;padding:8px;border-radius:10px}
+    .qrow:nth-child(odd){background:#0c111b}
+    #printShelf{display:none}
+    .print-sheet{width:186mm;min-height:261mm;margin:0 auto;color:#000;font:11pt/1.35 ui-serif,Georgia,"Times New Roman",serif}
+    .pr-headline{display:flex;align-items:center;gap:8mm;margin-bottom:3mm}
+    .pr-logo{width:22mm;height:auto;border-radius:4px}
+    .pr-title{font-weight:800;font-size:12pt;margin:0 0 2mm 0}
+    .pr-sub{font-size:10pt;margin:0 0 2mm 0}
+    .pr-hr{border:0;border-top:.6pt solid #000;margin:2mm 0 3mm}
+    .pr-meta{width:100%;border-collapse:collapse;margin:0 0 3mm 0}
+    .pr-meta td{vertical-align:top;padding:1.2mm 2mm;border:.4pt solid #000;font-size:10pt}
+    .pr-section-title{font-weight:700;border-bottom:.5pt solid #000;padding-bottom:1mm;margin:2mm 0 1.2mm}
+    .pr-q{font-weight:600;margin:1.2mm 0 .6mm}
+    .pr-a{margin:0 0 1.8mm 0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
+    .pr-a.empty{min-height:10mm;border-bottom:.5pt dotted #000}
+    @page{size:A4;margin:12mm}
+    @media print{body{background:#fff;color:#000}.app{display:none!important}#printShelf{display:block!important}.print-sheet{page-break-after:always;break-after:page}*{float:none!important}}
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="appbar">
+    <div class="toolbar">
+      <button class="btn primary" id="addBtn">+ Adaugă pagină</button>
+      <button class="btn" id="dupBtn">Duplică</button>
+      <button class="btn warn" id="delBtn">Șterge</button>
+      <div class="spacer"></div>
+      <label class="btn" style="display:flex;align-items:center;gap:8px;">Branding:
+        <select id="brandSelect">
+          <option value="none">— fără —</option>
+          <option value="UPT">UPT</option>
+        </select>
+      </label>
+      <button class="btn" id="printOneBtn">Printează (pagina selectată)</button>
+      <button class="btn" id="printAllBtn">Printează (toate paginile)</button>
+      <button class="btn success" id="saveBtn">Salvează (Local)</button>
+      <button class="btn" id="loadBtn">Încarcă</button>
+      <button class="btn" id="exportBtn">Export JSON</button>
+      <label class="btn" for="importFile" style="cursor:pointer">Import JSON</label>
+      <input id="importFile" type="file" accept="application/json" style="display:none"/>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="who">Munteanu Paul Andrei — Student, Universitatea Politehnica Timișoara</div>
+      <small>Practică pedagogică 2025–2026 · Sem. 1</small>
+    </div>
+    <div class="badge">Stare: <span id="status">ne-salvat</span></div>
+  </div>
+
+  <div class="shelf" id="shelf"></div>
+</div>
+<div id="printShelf"></div>
+<script>
+const SECTIONS=[{id:'s1',title:'1) Conduita elevilor pe parcursul lecției',questions:['Elevii sunt atenți la explicațiile profesorului','Elevii urmează instrucțiunile profesorului','Elevii lucrează individual','Elevii lucrează în grup','Elevii pun întrebări','Elevii răspund la întrebări','Elevii sunt disciplinați','Elevii au inițiativă și creativitate']},{id:'s2',title:'2) Proiectarea lecției și prezentarea conținutului',questions:['Obiective operaționale definite corect','Conținut adecvat obiectivelor','Etapele lecției stabilite corect','Metode didactice adecvate','Mijloace alese după principii pedagogice','Timpul etapelor stabilit corect','Rigoare științifică','Material actual','Accesibil nivelului clasei','Corelare cu alte discipline']},{id:'s3',title:'3) Organizarea și conducerea lecției (profesor)',questions:['Verifică prezența elevilor','Enunță subiectul și obiectivele','Încadrează lecția în contextul disciplinei','Captează atenția / interesul','Verifică cunoștințe anterioare','Verifică periodic înțelegerea','Evidențiază idei principale / structură','Stimulează participarea elevilor','Solicită aplicarea noilor cunoștințe','Respectă planificarea temporală','Menține disciplina pe tot parcursul']}] ;
+function uid(){return Math.random().toString(36).slice(2,10)};let MODEL={pages:[],selected:null,brand:'UPT'};const DEFAULT_META=()=>({liceul:'',disciplina:'',clasa:'',data:new Date().toISOString().slice(0,10),ora:'',prof:'',student:'Munteanu Paul Andrei',anul:'',facultatea:'Universitatea Politehnica Timișoara',sectia:''});const LS_KEY='grila_observare_andrei_v4';function saveLocal(){localStorage.setItem(LS_KEY,JSON.stringify(MODEL));pulse('salvat')}function loadLocal(){const raw=localStorage.getItem(LS_KEY);if(!raw)return false;try{MODEL=JSON.parse(raw);render();pulse('încărcat');return true}catch(e){alert('Nu s-a putut încărca salvarea.');return false}}function exportJSON(){const payload={_schema:'grila-observare-andrei',_version:4,_exported_at:new Date().toISOString(),model:MODEL};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`grila-observare-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}function importJSON(f){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);if(d&&d.model){MODEL=d.model}else if(d&&d.pages){MODEL=d}else throw Error('bad');render();pulse('importat')}catch(e){alert('Fișier JSON invalid.')}};fr.readAsText(f)}
+const shelf=document.getElementById('shelf');const printShelf=document.getElementById('printShelf');function pulse(t){document.getElementById('status').textContent=t}let saveTimer;function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveLocal,400)}function PAGE(){return MODEL.pages.find(p=>p.id===MODEL.selected)}function el(t,a={},...k){const n=document.createElement(t);for(const[kv,v]of Object.entries(a)){if(kv==='class')n.className=v;else if(kv==='html')n.innerHTML=v;else if(kv.startsWith('on')&&typeof v==='function')n.addEventListener(kv.slice(2),v);else n.setAttribute(kv,v)}k.forEach(x=>{if(x==null)return;typeof x==='string'?n.appendChild(document.createTextNode(x)):n.appendChild(x)});return n}
+function metaField(k,l,type='text'){const id=uid();const i=el('input',{type,id});const p=PAGE();i.value=p.meta[k]||'';i.oninput=()=>{p.meta[k]=i.value;scheduleSave()};return el('div',{class:'field'},el('label',{for:id},l),i)}function qRow(sid,i,text){const qid=`${sid}-${i}`;const p=PAGE();const ta=el('textarea',{placeholder:'Observații…'});ta.value=p.answers[qid]||'';ta.oninput=()=>{p.answers[qid]=ta.value;scheduleSave()};return el('div',{class:'qrow'},el('div',{},text),ta)}function newPage(){const p={id:uid(),meta:DEFAULT_META(),answers:{}};SECTIONS.forEach(s=>s.questions.forEach((_,i)=>p.answers[`${s.id}-${i}`]=''));return p}
+function selectPage(id){MODEL.selected=id;render()}function duplicateSelected(){const p=PAGE();if(!p)return;const c=JSON.parse(JSON.stringify(p));c.id=uid();MODEL.pages.push(c);MODEL.selected=c.id;render();scheduleSave()}function deleteSelected(){if(!PAGE())return;if(!confirm('Sigur ștergi această pagină?'))return;MODEL.pages=MODEL.pages.filter(p=>p.id!==MODEL.selected);MODEL.selected=MODEL.pages[0]?.id||null;render();scheduleSave()}
+function render(){shelf.innerHTML='';if(!MODEL.pages.length){const p=newPage();MODEL.pages.push(p);MODEL.selected=p.id;}for(const p of MODEL.pages){const head=el('div',{class:'sheet-head'},el('div',{},`Grilă — fișa #${MODEL.pages.indexOf(p)+1}`),el('div',{},el('button',{class:'btn',onclick:()=>selectPage(p.id)},p.id===MODEL.selected?'Selectată':'Selectează')));const meta=el('div',{class:'meta'},metaField('liceul','Liceul'),metaField('disciplina','Disciplina'),metaField('clasa','Clasa'),(()=>{const f=metaField('data','Data','date');f.querySelector('input').value=p.meta.data||'';return f;})(),(()=>{const f=metaField('ora','Ora','time');f.querySelector('input').value=p.meta.ora||'';return f;})(),metaField('prof','Profesor'),metaField('student','Student'),metaField('anul','Anul de studiu'),metaField('facultatea','Facultatea'),metaField('sectia','Secția'));const sec=SECTIONS.map(s=>el('div',{class:'section'},el('h3',{},s.title),...s.questions.map((q,i)=>qRow(s.id,i,q))));shelf.appendChild(el('section',{class:'sheet-card','data-id':p.id,style:p.id===MODEL.selected?'outline:2px solid var(--accent);':''},head,el('div',{class:'sheet-body'},meta,...sec)))} }
+function buildPrintSheet(p){const w=document.createElement('section');w.className='print-sheet';if(MODEL.brand==='UPT'){const h=document.createElement('div');h.className='pr-headline';h.innerHTML=`<img src='https://upt.ro/images/universitatea-politehnica-timisoara.jpg' class='pr-logo'><div><p class='pr-title'>Universitatea Politehnica Timișoara — DPPD</p><p class='pr-sub'>Grilă de observare a lecției · Practică pedagogică 2025–2026 · Sem. 1</p><p class='pr-sub'>Student: ${p.meta.student||'Munteanu Paul Andrei'} — ${p.meta.facultatea||'Universitatea Politehnica Timișoara'}</p></div>`;w.appendChild(h);w.appendChild(el('hr',{class:'pr-hr'}));}else w.appendChild(el('p',{class:'pr-title'},'Grilă de observare a lecției'));const M=p.meta;const tbl=document.createElement('table');tbl.className='pr-meta';const rows=[['Liceul',M.liceul||'','Disciplina',M.disciplina||''],['Clasa',M.clasa||'','Data',M.data||''],['Ora',M.ora||'','Profesor',M.prof||''],['Student',M.student||'','Anul',M.anul||''],['Facultatea',M.facultatea||'','Secția',M.sectia||'']];rows.forEach(r=>{const tr=document.createElement('tr');tr.innerHTML=`<td><b>${r[0]}:</b> ${r[1]}</td><td><b>${r[2]}:</b> ${r[3]}</td>`;tbl.appendChild(tr)});w.appendChild(tbl);let qn=1;SECTIONS.forEach(s=>{w.appendChild(el('div',{class:'pr-section-title'},s.title));s.questions.forEach((q,i)=>{w.appendChild(el('div',{class:'pr-q'},`${qn}. ${q}`));const ans=p.answers[`${s.id}-${i}`]||'';const a=document.createElement('div');a.className='pr-a'+(ans.trim()?'':' empty');a.textContent=ans;w.appendChild(a);qn++})});return w}
+function buildPrint(all){printShelf.innerHTML='';const list=all?MODEL.pages:MODEL.pages.filter(p=>p.id===MODEL.selected);list.forEach(p=>printShelf.appendChild(buildPrintSheet(p)))}function doPrint(all){buildPrint(all);window.onafterprint=()=>{printShelf.innerHTML='';window.onafterprint=null};window.print()}
+const addBtn=document.getElementById('addBtn');
+const dupBtn=document.getElementById('dupBtn');
+const delBtn=document.getElementById('delBtn');
+const saveBtn=document.getElementById('saveBtn');
+const loadBtn=document.getElementById('loadBtn');
+const exportBtn=document.getElementById('exportBtn');
+const importFile=document.getElementById('importFile');
+const printOneBtn=document.getElementById('printOneBtn');
+const printAllBtn=document.getElementById('printAllBtn');
+const brandSelect=document.getElementById('brandSelect');
+
+addBtn.onclick = ()=>{ const p=newPage(); MODEL.pages.push(p); MODEL.selected=p.id; render(); scheduleSave(); };
+dupBtn.onclick = duplicateSelected;
+delBtn.onclick = deleteSelected;
+saveBtn.onclick = saveLocal;
+loadBtn.onclick = ()=>{ if(!loadLocal()){ alert('Nu există o salvare locală.'); } };
+exportBtn.onclick = exportJSON;
+importFile.onchange = (e)=>{ const f=e.target.files?.[0]; if(f) importJSON(f); };
+printOneBtn.onclick = ()=> doPrint(false);
+printAllBtn.onclick = ()=> doPrint(true);
+brandSelect.onchange = ()=>{ MODEL.brand = brandSelect.value; scheduleSave(); };
+
+// Boot
+if(!loadLocal()) render(); else render();
+</script>
+</body>
+</html>
